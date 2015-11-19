@@ -1,0 +1,88 @@
+#!/bin/sh
+########################################################################################################################
+# GIT COMMANDS
+########################################################################################################################
+
+#Function to get the filename from the results stored in array
+function gf() {
+    if [[ ! $1 ]] ; then
+        echo "Error! No argument to get_filename!"
+        exit 1
+    fi
+    line=${gfr[$1 - 1]}
+    local filename
+    # Various formats that this command needs to parse:
+    if [[ $line =~ ":" ]] ; then
+        # most git commands
+        filename=`echo $line | sed -E "s/"$'\E'"\[([0-9]{1,3}((;[0-9]{1,3})*)?)?[m|K]//g" | perl -pe's/.*:\s+([^\s]*)[\^\[\]]+.*$/\1/'`
+    else
+        #edited but unstaged files
+        filename=`echo $line | sed -E "s/"$'\E'"\[([0-9]{1,3}((;[0-9]{1,3})*)?)?[m|K]//g" | perl -pe's/^\s+[0-9]+\s+([^\s:]*).*$/\1/'`
+    fi
+    echo "$filename"
+}
+
+is_num_result=""
+function is_num() {
+    if [[ $1 =~ ^-?[0-9]+$ ]]; then
+        is_num_result="yes"
+    else
+        is_num_result="no"
+    fi
+}
+
+is_generating_command="no"
+function is_gen_command() {
+    # Currently only two generating commands
+    if [[ $1 == "status" ||
+          $1 == "branch" ]]; then
+        is_generating_command="yes"
+    else
+        is_generating_command="no"
+    fi
+}
+
+function git_command() {
+    is_gen_command $1
+    if [[ $is_generating_command == "yes" ]]; then
+        gfr=()
+        IFS=$'\n' gfr=($(script -q /dev/null git $1 | nl))
+        printf '%s\n' "${gfr[@]}"
+    else
+        is_num $2
+        if [[ $is_num_result == "yes" ]]; then
+            git $1 $(gf $2)
+        else
+            git $1 $2
+        fi
+    fi
+}
+
+function fo() {
+    is_num $1
+    if [[ $is_num_result == "yes" ]]; then
+        emacs -nw `gf $1`
+    else
+        find . -name "$1" -exec emacs -nw {} \;
+    fi
+}
+
+gfr=()
+function gch() { filename=$(gf $1); git checkout $2 $filename; }
+alias gd='git_command diff '
+alias ga='git_command add '
+alias gl='git_command log '
+alias gan='git_command annotate '
+alias gr='git_command reset '
+alias gs='git_command status'
+alias gb='git_command branch'
+alias g='git'
+alias grp='git review post'
+alias grs='git review submit'
+alias gsh='git show'
+alias gp='kinit; git pull'
+
+# AWESOME if fo could autocomplete filenames to open
+# perhaps: http://unix.stackexchange.com/questions/28283/autocomplete-of-filename-in-directory
+
+########################################################################################################################
