@@ -9,17 +9,10 @@ function gf() {
         echo "Error! No argument to get_filename!"
         exit 1
     fi
-    line=${gfr[$1 - 1]}
-    local filename
-    # Various formats that this command needs to parse:
-    if [[ $line =~ ":" ]] ; then
-        # most git commands
-        filename=`echo $line | sed -E "s/"$'\E'"\[([0-9]{1,3}((;[0-9]{1,3})*)?)?[m|K]//g" | perl -pe's/.*:\s+([^\s]*)[\^\[\]]+.*$/\1/'`
-    else
-        #edited but unstaged files
-        filename=`echo $line | sed -E "s/"$'\E'"\[([0-9]{1,3}((;[0-9]{1,3})*)?)?[m|K]//g" | perl -pe's/^\s+[0-9]+\s+([^\s:]*).*$/\1/'`
-    fi
-    echo "$filename"
+    echo ${gfr[$1 - 1]} | 
+        sed -E "s/"$'\E'"\[([0-9]{1,3}((;[0-9]{1,3})*)?)?[m|K]//g" | 
+        awk '{ print $NF }' | 
+        tr -d '[[:cntrl:]]'
 }
 
 is_num_result=""
@@ -44,6 +37,7 @@ function is_gen_command() {
 
 function git_command() {
     is_gen_command $1
+    OLDIFS=$IFS
     if [[ $is_generating_command == "yes" ]]; then
         gfr=()
         IFS=$'\n' gfr=($(script -q /dev/null git $1 | nl))
@@ -56,6 +50,7 @@ function git_command() {
             git $1 $2
         fi
     fi
+    IFS=$OLDIFS
 }
 
 function fo() {
