@@ -1,11 +1,9 @@
 #!/bin/sh
 # WARNING: WIP!!
 #
-# Function to search a codebase for a snippet
-# of code, in a particular kind of file. Store
-# the results in an array called coderesults,
-# which is used by function or() to dereference
-# and open results in an emacs window
+# Function to search a codebase for a tag
+# Use the command cindex to generate the index
+# and the env var CSEARCHINDEX to be able to locate it
 #
 csr=()
 function f() {
@@ -69,3 +67,4 @@ function openEditorAt() {
 # displayed on the terminal
 #
 alias show_hidden="tr -dc '[:print:]' | od -c"
+
