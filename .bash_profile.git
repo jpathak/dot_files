@@ -36,7 +36,7 @@ function is_gen_command() {
 }
 
 clean="no"
-function is_workspace_dirty() { if [[ ${gfr[-1]} =~ "working directory clean" ]]; then clean="yes"; else clean="no"; fi }
+function is_workspace_dirty() { if [[ ${gfr[@]} =~ "working directory clean" ]]; then clean="yes"; else clean="no"; fi }
 
 function git_command() {
     clean="yes"
