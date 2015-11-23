@@ -7,10 +7,6 @@
 #
 csr=()
 function f() {
-    #
-    # CSEARCHINDEX needs to be updated to the current dir
-    #
-    export CSEARCHINDEX=$PWD/.csearchindex
     csr=()
     extension=".*"
     if (( "$#" == 2 )) ; then
