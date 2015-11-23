@@ -35,13 +35,22 @@ function is_gen_command() {
     fi
 }
 
+clean="no"
+function is_workspace_dirty() { if [[ ${gfr[1]} =~ "working directory clean" ]]; then clean="yes"; else clean="no"; fi }
+
 function git_command() {
+    clean="yes"
     is_gen_command $1
     OLDIFS=$IFS
     if [[ $is_generating_command == "yes" ]]; then
         gfr=()
         IFS=$'\n' gfr=($(script -q /dev/null git $1 | nl))
-        printf '%s\n' "${gfr[@]}"
+        is_workspace_dirty
+        if [[ $1 == "status" && $clean == "yes" ]]; then
+            git $1;
+        else
+            printf '%s\n' "${gfr[@]}"
+        fi
     else
         is_num $2
         if [[ $is_num_result == "yes" ]]; then
