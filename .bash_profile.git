@@ -1,9 +1,14 @@
 #!/bin/sh
 ########################################################################################################################
-# GIT COMMANDS
+# GIT COMMANDS -
+# A repository of git commands wrapped in a number-referencing wrapper
+# which makes it easy to run subsequent commands
 ########################################################################################################################
 
-#Function to get the filename from the results stored in array
+#
+# Function to get the filename from the
+# results stored in array
+#
 function gf() {
     if [[ ! $1 ]] ; then
         echo "Error! No argument to get_filename!"
@@ -16,6 +21,10 @@ function gf() {
 }
 
 is_num_result=""
+
+#
+# Is the argument a number ?
+#
 function is_num() {
     if [[ $1 =~ ^-?[0-9]+$ ]]; then
         is_num_result="yes"
@@ -24,6 +33,13 @@ function is_num() {
     fi
 }
 
+#
+# Is the command being run a generating command
+# (From which you choose something later, eg
+# git status gives a list of modified files and
+# you choose a file to open or diff, or
+# git branch gives a list of branches to checkout)
+#
 is_generating_command="no"
 function is_gen_command() {
     # Currently only two generating commands
@@ -36,8 +52,18 @@ function is_gen_command() {
 }
 
 clean="no"
+
+#
+# Is my workspace dirty ? (for this branch)
+#
 function is_workspace_dirty() { if [[ ${gfr[@]} =~ "working directory clean" ]]; then clean="yes"; else clean="no"; fi }
 
+#
+# Run a git command with special conditions
+# Examples of conditions include:
+# 1) Is this a generating command ?
+# 2) Is the argument to the command a number ?
+#
 function git_command() {
     clean="yes"
     is_gen_command $1
@@ -62,6 +88,12 @@ function git_command() {
     IFS=$OLDIFS
 }
 
+#
+# Function to find (and open if found) files
+# Arguments can include the filename or
+# optionally a number which is an option
+# from a previously run generating command.
+#
 function fo() {
     is_num $1
     if [[ $is_num_result == "yes" ]]; then
@@ -71,7 +103,14 @@ function fo() {
     fi
 }
 
+#
+# Array to store results of generating commands
+#
 gfr=()
+
+#
+# Aliases for the most commonly used git commands
+#
 function gch() { filename=$(gf $1); git checkout $2 $filename; }
 alias gd='git_command diff '
 alias ga='git_command add '
@@ -86,6 +125,9 @@ alias grs='git review submit'
 alias gsh='git show'
 alias gp='kinit; git pull'
 
+#
+# TODO list! (Help me out! :) )
+#
 # AWESOME if fo could autocomplete filenames to open
 # perhaps: http://unix.stackexchange.com/questions/28283/autocomplete-of-filename-in-directory
 
