@@ -33,13 +33,14 @@ function f() {
         IFS=$'\n' csr=($(script -q /dev/null csearch -f "$extension\$" -n "$1" | grep --color=always "$1" | nl))
     fi
     printf '%s\n' "${csr[@]}"
+    IFS=$OLDIFS
+    
     #
     # If only one result, take me there already!
     #
     if [ ${#csr[@]} -eq 1 ]; then
         r 1
     fi
-    IFS=$OLDIFS
 }
 
 #
