@@ -7,6 +7,23 @@
 #
 csr=()
 function f() {
+    #
+    # Set csearchindex to the top of the development directory of this
+    # git repo
+    #
+    CSEARCHINDEX="$(git rev-parse --show-toplevel)"/.csearchindex
+    #
+    # Create the search index if it doesn't exist already
+    #
+    if [[ ! -e $CSEARCHINDEX ]]; then
+        echo "First run! Creating search index at repo root"
+        cd $(git rev-parse --show-toplevel)
+        cindex .
+        #
+        # Exclude search index from git changes
+        #
+        echo ".csearchindex" >> "$(git rev-parse --show-toplevel)"/.git/info/exclude
+    fi
     csr=()
     extension=".*"
     if (( "$#" == 2 )) ; then
