@@ -7,37 +7,47 @@
 #
 csr=()
 function f() {
+
     #
-    # Set csearchindex to the top of the development directory of this
-    # git repo
+    # Check if this is a git repository
     #
-    CSEARCHINDEX="$(git rev-parse --show-toplevel)"/.csearchindex
-    #
-    # Create the search index if it doesn't exist already
-    #
-    if [[ ! -e $CSEARCHINDEX ]]; then
-        echo "First run! Creating search index at repo root"
-        cd $(git rev-parse --show-toplevel)
-        cindex .
+    if [[ $(git rev-parse --show-toplevel) ]]; then
         #
-        # Exclude search index from git changes
+        # Set csearchindex to the top of the development directory of this
+        # git repo
         #
-        echo ".csearchindex" >> "$(git rev-parse --show-toplevel)"/.git/info/exclude
+        CSEARCHINDEX="$(git rev-parse --show-toplevel)"/.csearchindex
+        #
+        # Create the search index if it doesn't exist already in the repo path
+        #
+        if [[ ! -e $CSEARCHINDEX ]]; then
+            echo "First run in a git repo! Creating search index at repo root"
+            pushd $(git rev-parse --show-toplevel)
+            cindex .
+            popd
+            #
+            # Exclude search index from git changes
+            #
+            echo ".csearchindex" >> "$(git rev-parse --show-toplevel)"/.git/info/exclude
+        fi
+    else
+        CSEARCHINDEX=""
     fi
+
     csr=()
     extension=".*"
     if (( "$#" == 2 )) ; then
         extension=$2
     fi
-
     OLDIFS=$IFS
+
     #
     # using "script" preserves color formatting
     # which can be then piped into the csr array
     # Regular search runs on grep
     #
     echo "Searching files of type (regex): $extension"
-    if [ ! -f $CSEARCHINDEX ]; then
+    if [[ ! -e $CSEARCHINDEX ]]; then
         echo "Using regular search..."
         IFS=$'\n' csr=($(script -q /dev/null find . \
                -name "*.$extension" \
@@ -49,6 +59,7 @@ function f() {
         #
         IFS=$'\n' csr=($(script -q /dev/null csearch -f "$extension\$" -n "$1" | grep --color=always "$1" | nl))
     fi
+
     printf '%s\n' "${csr[@]}"
     IFS=$OLDIFS
     
@@ -64,7 +75,20 @@ function f() {
 # Reference the code results generated above in f()
 #
 function r() {
-    openEditorAt `echo ${csr[$1 - 1]} | sed -E "s/"$'\E'"\[([0-9]{1,3}((;[0-9]{1,3})*)?)?[m|K]//g" | perl -pe's/^.*[0-9]+\s+([^\s:]*):([0-9]+):.*$/\1 \2/'`
+    openEditorAt $(gfr $1)
+}
+
+#
+# Useful function to open results in sublime text editor,
+# you need to have set it up from instructions here:
+# https://www.sublimetext.com/docs/2/osx_command_line.html
+#
+function sr() {
+    EDITOR=subl openEditorAt $(gfr $1)
+}
+
+function gfr() {
+    echo ${csr[$1 - 1]} | sed -E "s/"$'\E'"\[([0-9]{1,3}((;[0-9]{1,3})*)?)?[m|K]//g" | perl -pe's/^.*[0-9]+\s+([^\s:]*):([0-9]+):.*$/\1 \2/'
 }
 
 function openEditorAt() {
