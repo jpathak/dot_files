@@ -110,6 +110,8 @@ gfr=()
 
 #
 # Aliases for the most commonly used git commands
+# Usage:
+# <command> [optional line number] <arguments that may follow the original command>
 #
 function gch() { filename=$(gf $1); git checkout $2 $filename; }
 alias gd='git_command diff '
