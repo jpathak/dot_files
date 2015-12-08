@@ -97,9 +97,9 @@ function git_command() {
 function fo() {
     is_num $1
     if [[ $is_num_result == "yes" ]]; then
-        emacs -nw `gf $1`
+        $EDITOR `gf $1`
     else
-        find . -name "$1" -exec emacs -nw {} \;
+        find . -name "$1" -exec $EDITOR {} \;
     fi
 }
 
