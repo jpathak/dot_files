@@ -55,7 +55,7 @@ function f() {
         echo "Using regular search..."
         IFS=$'\n' csr=($(script -q /dev/null find . \
                -name "*.$extension" \
-               -exec grep -rnie "$1" {} \; | nl))
+               -exec grep --mmap -rnie "$1" {} \; | nl))
     else
         echo "Using indexed search, index=$CSEARCHINDEX"
         #
