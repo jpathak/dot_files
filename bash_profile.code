@@ -123,3 +123,4 @@ function openEditorAt() {
 # ls | show_hidden
 #
 alias show_hidden="tr -dc '[:print:]' | od -c"
+alias c_index='CSEARCHINDEX="$(git rev-parse --show-toplevel)"/.csearchindex; cindex .' 
