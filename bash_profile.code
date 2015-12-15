@@ -254,7 +254,7 @@ function fo() {
 # Usage:
 # <command> [optional line number] <arguments that may follow the original command>
 #
-function gch() { filename=$(gf $1); git checkout $2 $filename; }
+function gch() { filename=$(resolve $1 0); git checkout $2 $filename; }
 alias gd='git_command diff '
 alias ga='git_command add '
 alias gl='git_command log '
