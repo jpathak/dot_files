@@ -242,8 +242,15 @@ function git_command() {
 #
 function fo() {
     is_num $1
+    # open dir option only applicable for numbered arguments
+    # since there can be many matches for an arbitrary filename
+    open_dir=${2:-0}
     if [[ $is_num_result == "yes" ]]; then
-        openEditorAt `resolve $1`
+        if [[ $open_dir == 1 ]]; then
+            pushd $(dirname $(resolve $1 0))
+        else
+            openEditorAt $(resolve $1)
+        fi
     else
         find . -name "$1" -exec $EDITOR {} \;
     fi
