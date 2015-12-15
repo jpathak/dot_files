@@ -12,6 +12,7 @@ csr=()
 # f <text to find> [filetype]
 #
 function f() {
+    is_git_command=0
     #
     # Check if this is a git repository
     #
@@ -81,7 +82,7 @@ function f() {
 # r <number against line number of result>
 #
 function r() {
-    openEditorAt $(gfr $1)
+    openEditorAt $(resolve $1)
 }
 
 #
@@ -92,14 +93,26 @@ function r() {
 # sr <number against line number of result>
 #
 function sr() {
-    EDITOR=subl openEditorAt $(gfr $1)
+    EDITOR=subl openEditorAt $(resolve $1)
 }
 
 #
 # Utility function to get the filename at line number
 #
-function gfr() {
-    echo ${csr[$1 - 1]} | sed -E "s/"$'\E'"\[([0-9]{1,3}((;[0-9]{1,3})*)?)?[m|K]//g" | perl -pe's/^.*[0-9]+\s+([^\s:]*):([0-9]+):.*$/\1 \2/'
+function resolve() {
+    with_linenum=${2:-1}
+    temp=$(echo ${csr[$1 - 1]} | sed -E "s/"$'\E'"\[([0-9]{1,3}((;[0-9]{1,3})*)?)?[m|K]//g")
+    if [[ $is_git_command == 1 ]]; then
+        echo $temp | 
+        awk '{ print $NF }' | 
+        tr -d '[[:cntrl:]]'
+    else
+        if [[ $with_linenum == 1 ]]; then
+            echo $temp | perl -pe's/^.*[0-9]+\s+([^\s:]*):([0-9]+):.*$/\1 \2/'
+        else
+            echo $temp | perl -pe's/^.*[0-9]+\s+([^\s:]*):([0-9]+):.*$/\1/'
+        fi
+    fi
 }
 
 #
@@ -108,13 +121,20 @@ function gfr() {
 # openEditorAt <file> <lineno>
 #
 function openEditorAt() {
-    if [[ $EDITOR =~ "emacs" ]]; then
-        $EDITOR +$2 $1
+    if [[ -z $2 ]]; then
+        $EDITOR $1
     else
-        $EDITOR $1:$2
+        if [[ $EDITOR =~ "emacs" ]]; then
+            $EDITOR +$2 $1
+        else
+            $EDITOR $1:$2
+        fi
     fi
 }
 
+#
+# Utility function to compare versions
+#
 function compare_version_lesser() {
     test "$(echo "$@" | tr " " "\n" | sort -nr | head -n 1)" != "$1";
 }
@@ -127,9 +147,7 @@ function compare_version_lesser() {
 # ls | show_hidden
 #
 alias show_hidden="tr -dc '[:print:]' | od -c"
-alias c_index='CSEARCHINDEX="$(git rev-parse --show-toplevel)"/.csearchindex; cindex .' 
-
-
+alias ci='CSEARCHINDEX="$(git rev-parse --show-toplevel)"/.csearchindex; cindex .' 
 
 #!/bin/sh
 ########################################################################################################################
@@ -139,25 +157,9 @@ alias c_index='CSEARCHINDEX="$(git rev-parse --show-toplevel)"/.csearchindex; ci
 ########################################################################################################################
 
 #
-# Function to get the filename from the
-# results stored in array
-#
-function gf() {
-    if [[ ! $1 ]] ; then
-        echo "Error! No argument to get_filename!"
-        exit 1
-    fi
-    echo ${gfr[$1 - 1]} | 
-        sed -E "s/"$'\E'"\[([0-9]{1,3}((;[0-9]{1,3})*)?)?[m|K]//g" | 
-        awk '{ print $NF }' | 
-        tr -d '[[:cntrl:]]'
-}
-
-is_num_result=""
-
-#
 # Is the argument a number ?
 #
+is_num_result=""
 function is_num() {
     if [[ $1 =~ ^-?[0-9]+$ ]]; then
         is_num_result="yes"
@@ -186,10 +188,15 @@ function is_gen_command() {
 
 clean="no"
 
+
 #
 # Is my workspace dirty ? (for this branch)
 #
-function is_workspace_dirty() { if [[ ${gfr[@]} =~ "working directory clean" ]]; then clean="yes"; else clean="no"; fi }
+function is_workspace_dirty() { 
+    if [[ ${csr[@]} =~ "working directory clean" ]]; then 
+        clean="yes"; else clean="no"; 
+    fi 
+}
 
 #
 # Run a git command with special conditions
@@ -197,23 +204,29 @@ function is_workspace_dirty() { if [[ ${gfr[@]} =~ "working directory clean" ]];
 # 1) Is this a generating command ?
 # 2) Is the argument to the command a number ?
 #
+is_git_command=0
 function git_command() {
     clean="yes"
     is_gen_command $1
     OLDIFS=$IFS
     if [[ $is_generating_command == "yes" ]]; then
-        gfr=()
-        IFS=$'\n' gfr=($(script -q /dev/null git $1 | nl))
+        is_git_command=1
+        csr=()
+        IFS=$'\n' csr=($(script -q /dev/null git $1 | nl))
         is_workspace_dirty
         if [[ $1 == "status" && $clean == "yes" ]]; then
             git $1;
         else
-            printf '%s\n' "${gfr[@]}"
+            printf '%s\n' "${csr[@]}"
         fi
     else
+    	#
+    	# Either there was a git generating command or
+    	# a f() generating command
+    	#
         is_num $2
         if [[ $is_num_result == "yes" ]]; then
-            git $1 $(gf $2)
+            git $1 $(resolve $2 0)
         else
             git $1 $2
         fi
@@ -230,16 +243,11 @@ function git_command() {
 function fo() {
     is_num $1
     if [[ $is_num_result == "yes" ]]; then
-        $EDITOR `gf $1`
+        openEditorAt `resolve $1`
     else
         find . -name "$1" -exec $EDITOR {} \;
     fi
 }
-
-#
-# Array to store results of generating commands
-#
-gfr=()
 
 #
 # Aliases for the most commonly used git commands
