@@ -98,6 +98,7 @@ function sr() {
 
 #
 # Utility function to get the filename at line number
+# from the catch-all array csr
 #
 function resolve() {
     with_linenum=${2:-1}
@@ -107,10 +108,10 @@ function resolve() {
         awk '{ print $NF }' | 
         tr -d '[[:cntrl:]]'
     else
-        if [[ $with_linenum == 1 ]]; then
-            echo $temp | perl -pe's/^.*[0-9]+\s+([^\s:]*):([0-9]+):.*$/\1 \2/'
+	if [[ $with_linenum == 1 ]]; then
+	    echo $temp | perl -pe's/^\s*[0-9]+\s+([^\s:]*):*([0-9]+)*:*.*$/\1 \2/'
         else
-            echo $temp | perl -pe's/^.*[0-9]+\s+([^\s:]*):([0-9]+):.*$/\1/'
+	    echo $temp | perl -pe's/^\s*[0-9]+\s+([^\s:]*):*([0-9]+)*:*.*$/\1/'
         fi
     fi
 }
@@ -252,7 +253,18 @@ function fo() {
             openEditorAt $(resolve $1)
         fi
     else
-        find . -name "$1" -exec $EDITOR {} \;
+	OLDIFS=$IFS
+	IFS=$'\n' csr=($(script -q /dev/null find . -name "$1" | nl))
+	printf '%s\n' "${csr[@]}"
+	IFS=$OLDIFS
+
+	#
+	# If only one result, take me there already!
+	#
+	if [ ${#csr[@]} -eq 1 ]; then
+	    r 1
+	fi
+        #find . -name "$1" -exec $EDITOR {} \;
     fi
 }
 
