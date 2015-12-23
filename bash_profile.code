@@ -210,26 +210,27 @@ function git_command() {
     clean="yes"
     is_gen_command $1
     OLDIFS=$IFS
+    #
+    # Either there was a git generating command or
+    # a f() generating command
+    #
     if [[ $is_generating_command == "yes" ]]; then
         is_git_command=1
         csr=()
-        IFS=$'\n' csr=($(script -q /dev/null git $1 | nl))
+        IFS=$'\n' csr=($(script -q /dev/null git $1 $2 | nl))
         is_workspace_dirty
         if [[ $1 == "status" && $clean == "yes" ]]; then
-            git $1;
+            git $1 $2;
         else
             printf '%s\n' "${csr[@]}"
         fi
     else
-    	#
-    	# Either there was a git generating command or
-    	# a f() generating command
-    	#
-        is_num $2
+    	is_num $2
         if [[ $is_num_result == "yes" ]]; then
-            git $1 $(resolve $2 0)
+            git $1 $3 $(resolve $2 0)
         else
-            git $1 $2
+            # $3 is any other options which were given
+            git $1 $3 $2
         fi
     fi
     IFS=$OLDIFS
