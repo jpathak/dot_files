@@ -12,6 +12,7 @@ csr=()
 # f <text to find> [filetype]
 #
 function f() {
+
     is_git_command=0
     #
     # Check if this is a git repository
@@ -21,7 +22,7 @@ function f() {
         # Set csearchindex to the top of the development directory of this
         # git repo
         #
-        CSEARCHINDEX="$(git rev-parse --show-toplevel)"/.csearchindex
+        export CSEARCHINDEX="$(git rev-parse --show-toplevel)"/.csearchindex
         #
         # Create the search index if it doesn't exist already in the repo path
         #
