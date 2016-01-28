@@ -15,30 +15,9 @@ function f() {
 
     is_git_command=0
     #
-    # Check if this is a git repository
+    # Update CSEARCHINDEX
     #
-    if [[ $(git rev-parse --show-toplevel) ]]; then
-        #
-        # Set csearchindex to the top of the development directory of this
-        # git repo
-        #
-        export CSEARCHINDEX="$(git rev-parse --show-toplevel)"/.csearchindex
-        #
-        # Create the search index if it doesn't exist already in the repo path
-        #
-        if [[ ! -e $CSEARCHINDEX ]]; then
-            echo "First run in a git repo! Creating search index at repo root"
-            pushd $(git rev-parse --show-toplevel)
-            cindex .
-            popd
-            #
-            # Exclude search index from git changes
-            #
-            echo ".csearchindex" >> "$(git rev-parse --show-toplevel)"/.git/info/exclude
-        fi
-    else
-        CSEARCHINDEX=""
-    fi
+    update_csearch
 
     csr=()
     extension=".*"
@@ -74,6 +53,34 @@ function f() {
     #
     if [ ${#csr[@]} -eq 1 ]; then
         r 1
+    fi
+}
+
+function update_csearch() {
+    #
+    # Check if this is a git repository
+    #
+    if [[ $(git rev-parse --show-toplevel) ]]; then
+        #
+        # Set csearchindex to the top of the development directory of this
+        # git repo
+        #
+        export CSEARCHINDEX="$(git rev-parse --show-toplevel)"/.csearchindex
+
+        #
+        # Create the search index if it doesn't exist already in the repo path
+        #
+        if [[ ! -e $CSEARCHINDEX ]] || [[ $1 ]]; then
+            pushd $(git rev-parse --show-toplevel)
+            cindex .
+            popd
+            #
+            # Exclude search index from git changes
+            #
+            echo ".csearchindex" >> "$(git rev-parse --show-toplevel)"/.git/info/exclude
+        fi
+    else
+        CSEARCHINDEX=""
     fi
 }
 
@@ -163,7 +170,7 @@ alias ci='CSEARCHINDEX="$(git rev-parse --show-toplevel)"/.csearchindex; cindex 
 #
 is_num_result=""
 function is_num() {
-    if [[ $1 =~ ^-?[0-9]+$ ]]; then
+    if [[ $1 =~ ^[0-9]+$ ]]; then
         is_num_result="yes"
     else
         is_num_result="no"
@@ -180,8 +187,14 @@ function is_num() {
 is_generating_command="no"
 function is_gen_command() {
     # Currently only two generating commands
-    if [[ $1 == "status" ||
-          $1 == "branch" ]]; then
+    arg=$1
+    if [[ $1 =~ -- ]]; then
+        arg=$2
+    fi
+    if [[ $arg == "status" ||
+          $arg == "show" ||
+          $arg == "log" ||
+          $arg == "branch" ]]; then
         is_generating_command="yes"
     else
         is_generating_command="no"
@@ -209,7 +222,7 @@ function is_workspace_dirty() {
 is_git_command=0
 function git_command() {
     clean="yes"
-    is_gen_command $1
+    is_gen_command $@
     OLDIFS=$IFS
     #
     # Either there was a git generating command or
@@ -217,20 +230,26 @@ function git_command() {
     #
     if [[ $is_generating_command == "yes" ]]; then
         is_git_command=1
-        csr=()
-        IFS=$'\n' csr=($(script -q /dev/null git $1 $2 | nl))
+        arg=$@
+        is_num ${@: -1}
+        if [[ $is_num_result == "yes" ]]; then
+            arg="${@:1:$(($#-1))} $(resolve ${@: -1})"
+        fi
+        IFS=$' ' rarg=($arg) IFS=$OLDIFS
+        IFS=$'\n' csr=($(script -q /dev/null git ${rarg[@]} | nl))
+
         is_workspace_dirty
         if [[ $1 == "status" && $clean == "yes" ]]; then
-            git $1 $2;
-        else
+            git $@;
+        else    
             printf '%s\n' "${csr[@]}"
         fi
     else
     	is_num $2
+        # $3 is any other options which were given
         if [[ $is_num_result == "yes" ]]; then
             git $1 $3 $(resolve $2 0)
         else
-            # $3 is any other options which were given
             git $1 $3 $2
         fi
     fi
@@ -279,7 +298,10 @@ function fo() {
 alias gch='git_command checkout'
 alias gd='git_command diff '
 alias ga='git_command add '
-alias gl='git_command log '
+#normal git log
+alias gl='git log'
+# git log for numbered access
+alias glp='git_command --no-pager log  -5'
 alias gan='git_command annotate '
 alias gr='git_command reset '
 alias gs='git_command status'
@@ -289,7 +311,8 @@ alias grp='git review post'
 alias grs='git review submit'
 alias gro='git review open'
 alias gsh='git show'
-alias gp='kinit; git pull'
+alias gshn='git_command show --name-only'
+alias gp='kinit; git pull && update_csearch 1'
 
 #
 # TODO list! (Help me out! :) )
