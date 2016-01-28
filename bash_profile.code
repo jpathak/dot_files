@@ -77,7 +77,7 @@ function update_csearch() {
             #
             # Exclude search index from git changes
             #
-            echo ".csearchindex" >> "$(git rev-parse --show-toplevel)"/.git/info/exclude
+            printf ".csearchindex\n" >> "$(git rev-parse --show-toplevel)"/.git/info/exclude
         fi
     else
         CSEARCHINDEX=""
