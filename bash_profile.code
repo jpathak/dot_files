@@ -116,10 +116,10 @@ function resolve() {
         awk '{ print $NF }' | 
         tr -d '[[:cntrl:]]'
     else
-	if [[ $with_linenum == 1 ]]; then
-	    echo $temp | perl -pe's/^\s*[0-9]+\s+([^\s:]*):*([0-9]+)*:*.*$/\1 \2/'
+        if [[ $with_linenum == 1 ]]; then
+            echo $temp | perl -pe's/^\s*[0-9]+\s+([^\s:]*):*([0-9]+)*:*.*$/\1 \2/'
         else
-	    echo $temp | perl -pe's/^\s*[0-9]+\s+([^\s:]*):*([0-9]+)*:*.*$/\1/'
+            echo $temp | perl -pe's/^\s*[0-9]+\s+([^\s:]*):*([0-9]+)*:*.*$/\1/'
         fi
     fi
 }
@@ -245,7 +245,7 @@ function git_command() {
             printf '%s\n' "${csr[@]}"
         fi
     else
-    	is_num $2
+        is_num $2
         # $3 is any other options which were given
         if [[ $is_num_result == "yes" ]]; then
             git $1 $3 $(resolve $2 0)
@@ -274,19 +274,26 @@ function fo() {
             openEditorAt $(resolve $1)
         fi
     else
-	OLDIFS=$IFS
-	IFS=$'\n' csr=($(script -q /dev/null find . -name "$1" | nl))
-	printf '%s\n' "${csr[@]}"
-	IFS=$OLDIFS
+        OLDIFS=$IFS
+        IFS=$'\n' csr=($(script -q /dev/null find . -name "$1" | nl))
+        printf '%s\n' "${csr[@]}"
+        IFS=$OLDIFS
 
-	#
-	# If only one result, take me there already!
-	#
-	if [ ${#csr[@]} -eq 1 ]; then
-	    r 1
-	fi
-        #find . -name "$1" -exec $EDITOR {} \;
+        #
+        # If only one result, take me there already!
+        #
+        if [ ${#csr[@]} -eq 1 ]; then
+            if [[ $open_dir == 1 ]]; then
+                pushd $(dirname $(resolve 1 0))
+            else
+                r 1
+            fi
+        fi
     fi
+}
+
+function grm() {
+    rm `resolve $1 0`
 }
 
 #
@@ -306,7 +313,6 @@ alias gan='git_command annotate '
 alias gr='git_command reset '
 alias gs='git_command status'
 alias gb='git_command branch'
-alias grm='git_command rm'
 alias g='git'
 alias grp='git review post'
 alias grs='EDITOR=emacs git review submit'
