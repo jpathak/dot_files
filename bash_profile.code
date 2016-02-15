@@ -94,17 +94,6 @@ function r() {
 }
 
 #
-# Useful function to open results in sublime text editor,
-# you need to have set it up from instructions here:
-# https://www.sublimetext.com/docs/2/osx_command_line.html
-# Usage:
-# sr <number against line number of result>
-#
-function sr() {
-    EDITOR=subl openEditorAt $(resolve $1)
-}
-
-#
 # Utility function to get the filename at line number
 # from the catch-all array csr
 #
