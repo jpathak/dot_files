@@ -1,22 +1,26 @@
 #!/bin/sh
 # WARNING: WIP!!
-#
-# Function to search a codebase for a tag
-# Use the command cindex to generate the index
-# and the env var CSEARCHINDEX to be able to locate it
-#
-csr=()
+
+# Check if csearch exists
+if [[ ! $(which csearch) =~ "csearch" ]]; 
+    then echo "csearch not found! Please install csearch "
+        "(https://github.com/google/codesearch) before continuing"
+    exit 1 
+fi
+
 #
 # Function f 'find' (a tag in code)
+# Use the command cindex to generate the index
+# and the env var CSEARCHINDEX to be able to locate it
 # Usage:
 # f <text to find> [filetype]
 #
+csr=()
 function f() {
 
     is_git_command=0
-    #
+
     # Update CSEARCHINDEX
-    #
     update_csearch
 
     csr=()
@@ -26,11 +30,9 @@ function f() {
     fi
     OLDIFS=$IFS
 
-    #
     # using "script" preserves color formatting
     # which can be then piped into the csr array
     # Regular search runs on grep
-    #
     echo "Searching files of type (regex): $extension"
     if [[ ! -e $CSEARCHINDEX ]]; then
         echo "Using regular search..."
@@ -39,44 +41,37 @@ function f() {
                -exec grep --mmap -rnie "$1" {} \; | nl))
     else
         echo "Using indexed search, index=$CSEARCHINDEX"
-        #
+
         # "Fast" search runs on csearch
-        #
-        IFS=$'\n' csr=($(script -q /dev/null csearch -f "$extension\$" -n "$1" | grep --color=always "$1" | nl -d '\n'))
+        IFS=$'\n' csr=($(script -q /dev/null csearch -f "$extension\$" -n "$1"
+         | grep --color=always "$1" | nl -d '\n'))
     fi
 
     printf '%s\n' "${csr[@]}"
     IFS=$OLDIFS
     
-    #
     # If only one result, take me there already!
-    #
     if [ ${#csr[@]} -eq 1 ]; then
         r 1
     fi
 }
 
 function update_csearch() {
-    #
+
     # Check if this is a git repository
-    #
     if [[ $(git rev-parse --show-toplevel) ]]; then
-        #
+
         # Set csearchindex to the top of the development directory of this
         # git repo
-        #
         export CSEARCHINDEX="$(git rev-parse --show-toplevel)"/.csearchindex
 
-        #
         # Create the search index if it doesn't exist already in the repo path
-        #
         if [[ ! -e $CSEARCHINDEX ]] || [[ $1 ]]; then
             pushd $(git rev-parse --show-toplevel)
             cindex .
             popd
-            #
+
             # Exclude search index from git changes
-            #
             printf ".csearchindex\n" >> "$(git rev-parse --show-toplevel)"/.git/info/exclude
         fi
     else
@@ -84,40 +79,37 @@ function update_csearch() {
     fi
 }
 
-#
 # Reference the code results generated above in f()
 # Usage:
 # r <number against line number of result>
-#
 function r() {
     openEditorAt $(resolve $1)
 }
 
-#
 # Utility function to get the filename at line number
 # from the catch-all array csr
-#
 function resolve() {
     with_linenum=${2:-1}
-    temp=$(echo ${csr[$1 - 1]} | sed -E "s/"$'\E'"\[([0-9]{1,3}((;[0-9]{1,3})*)?)?[m|K]//g")
+    temp=$(echo ${csr[$1 - 1]} | 
+        sed -E "s/"$'\E'"\[([0-9]{1,3}((;[0-9]{1,3})*)?)?[m|K]//g")
     if [[ $is_git_command == 1 ]]; then
         echo $temp | 
         awk '{ print $NF }' | 
         tr -d '[[:cntrl:]]'
     else
         if [[ $with_linenum == 1 ]]; then
-            echo $temp | perl -pe's/^\s*[0-9]+\s+([^\s:]*):*([0-9]+)*:*.*$/\1 \2/'
+            echo $temp | 
+                perl -pe's/^\s*[0-9]+\s+([^\s:]*):*([0-9]+)*:*.*$/\1 \2/'
         else
-            echo $temp | perl -pe's/^\s*[0-9]+\s+([^\s:]*):*([0-9]+)*:*.*$/\1/'
+            echo $temp | 
+                perl -pe's/^\s*[0-9]+\s+([^\s:]*):*([0-9]+)*:*.*$/\1/'
         fi
     fi
 }
 
-#
 # Utility function to open a file at line number
 # Usage:
 # openEditorAt <file> <lineno>
-#
 function openEditorAt() {
     if [[ -z $2 ]]; then
         $EDITOR $1
@@ -130,33 +122,22 @@ function openEditorAt() {
     fi
 }
 
-#
 # Utility function to compare versions
-#
 function compare_version_lesser() {
     test "$(echo "$@" | tr " " "\n" | sort -nr | head -n 1)" != "$1";
 }
 
-#
 # With all the stuff around bash and colors,
 # this command is useful to find out what exactly being
 # displayed on the terminal
 # Usage:
 # ls | show_hidden
-#
 alias show_hidden="tr -dc '[:print:]' | od -c"
 alias ci='CSEARCHINDEX="$(git rev-parse --show-toplevel)"/.csearchindex; cindex .' 
 
-#!/bin/sh
-########################################################################################################################
-# GIT COMMANDS -
-# A repository of git commands wrapped in a number-referencing wrapper
-# which makes it easy to run subsequent commands
-########################################################################################################################
 
-#
+
 # Is the argument a number ?
-#
 is_num_result=""
 function is_num() {
     if [[ $1 =~ ^[0-9]+$ ]]; then
@@ -166,13 +147,11 @@ function is_num() {
     fi
 }
 
-#
 # Is the command being run a generating command
-# (From which you choose something later, eg
+# (from which a further action may be performed:
 # git status gives a list of modified files and
 # you choose a file to open or diff, or
 # git branch gives a list of branches to checkout)
-#
 is_generating_command="no"
 function is_gen_command() {
     # Currently only two generating commands
@@ -190,33 +169,27 @@ function is_gen_command() {
     fi
 }
 
-clean="no"
-
-
-#
 # Is my workspace dirty ? (for this branch)
-#
+clean="no"
 function is_workspace_dirty() { 
     if [[ ${csr[@]} =~ "working directory clean" ]]; then 
         clean="yes"; else clean="no"; 
     fi 
 }
 
-#
 # Run a git command with special conditions
 # Examples of conditions include:
-# 1) Is this a generating command ?
+# 1) Is this a generating command ? (command which produces output
+#   from which you would need to perform further actions)
 # 2) Is the argument to the command a number ?
-#
 is_git_command=0
 function git_command() {
     clean="yes"
     is_gen_command $@
     OLDIFS=$IFS
-    #
+
     # Either there was a git generating command or
     # a f() generating command
-    #
     if [[ $is_generating_command == "yes" ]]; then
         is_git_command=1
         arg=$@
@@ -245,12 +218,10 @@ function git_command() {
     IFS=$OLDIFS
 }
 
-#
 # Function to find (and open if found) files
 # Arguments can include the filename or
 # optionally a number which is an option
 # from a previously run generating command.
-#
 function fo() {
     is_num $1
     # open dir option only applicable for numbered arguments
@@ -285,19 +256,28 @@ function grm() {
     rm `resolve $1 0`
 }
 
-#
-# Aliases for the most commonly used git commands
+function gcm() {
+    git commit -m "$@"
+}
+
+######################################################################
+# GIT COMMANDS -
+# A repository of git commands wrapped in a number-referencing wrapper
+# which makes it easy to run subsequent commands
 # Usage:
-# <command> [optional line number] <arguments that may follow the original command>
-#
+# <command> [optional line number] <arguments that may follow the 
+# original command>
+######################################################################
 #function gch() { filename=$(resolve $1 0); git checkout $2 $filename; }
 alias gch='git_command checkout'
 alias gd='git_command diff '
 alias ga='git_command add '
+
 #normal git log
 alias gl='git log'
+
 # git log for numbered access
-alias glp='git_command --no-pager log  -5'
+alias glp='git_command --no-pager log -5'
 alias gan='git_command annotate '
 alias gr='git_command reset '
 alias gs='git_command status'
@@ -313,10 +293,8 @@ alias gp='kinit; git pull && update_csearch 1'
 #
 # TODO list! (Help me out! :) )
 #
-# AWESOME if fo could autocomplete filenames to open
+# awesome-to-have: fo can autocomplete filenames to open
 # perhaps: http://unix.stackexchange.com/questions/28283/autocomplete-of-filename-in-directory
-
-########################################################################################################################
 
 
 

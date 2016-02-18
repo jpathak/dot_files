@@ -14,14 +14,13 @@ Enjoy!
 
 #Common commands
 1) Search for a tag in the index
-  f <tag>
+  f \<tag\>
 
 2) Open the results of the search in your favorite editor ($EDITOR)
-  r <number of the result>
-  sr <number of the result>  #opens it in sublime text (sometimes useful!)
-
-3) Search and open a file with name <name>
-  fo <name>
+  r \<number of the result\>
+  
+3) Search and open a file with name \<name\>
+  fo \<name\>
   Output: If there are multiple matches, then it will give you a numbered list. Use the same command again with a number to open.
 
 4) Use any git commands with the same numbered syntax:
