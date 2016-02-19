@@ -87,11 +87,9 @@ function r() {
 # from the catch-all array csr
 function resolve() {
     with_linenum=${2:-1}
-    temp=$(echo ${csr[$1 - 1]} | 
-        sed -E "s/"$'\E'"\[([0-9]{1,3}((;[0-9]{1,3})*)?)?[m|K]//g")
+    temp=$(echo ${csr[$1 - 1]} | sed -E "s/"$'\E'"\[([0-9]{1,3}((;[0-9]{1,3})*)?)?[m|K]//g")
     if [[ $is_git_command == 1 ]]; then
-        echo $temp | awk '{ print $NF }' | 
-        tr -d '[[:cntrl:]]'
+        echo $temp | awk '{ print $NF }' | tr -d '[[:cntrl:]]'
     else
         if [[ $with_linenum == 1 ]]; then
             echo $temp | perl -pe's/^\s*[0-9]+\s+([^\s:]*):*([0-9]+)*:*.*$/\1 \2/'
