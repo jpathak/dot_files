@@ -293,7 +293,7 @@ alias gsh='git show'
 alias gshn='git_command show --name-only'
 alias gp='kinit; git pull && update_csearch 1'
 alias gtl='pushd $(git rev-parse --show-toplevel)'
-alias gsc='git log master.. -p'
+alias gsc='git diff master --name-only'
 alias gcl='numbered_command cpplint'
 
 #
