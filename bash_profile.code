@@ -180,12 +180,25 @@ function is_workspace_dirty() {
 is_git_command=0
 function git_command() {
     is_git_command=1
+    is_generating_command="no"
+    numbered_command $@
+}
+
+function git_generating_command() {
+    is_git_command=1
+    is_generating_command="yes"
+    numbered_command $@
+}
+
+function numbered_generating_command() {
+    is_generating_command="yes"
+    is_git_command=0
     numbered_command $@
 }
 
 function numbered_command() {
     clean="yes"
-    is_gen_command $@
+    #is_gen_command $@
     OLDIFS=$IFS
 
     # Either there was a git generating command or
@@ -280,21 +293,21 @@ alias ga='git_command add '
 alias gl='git log'
 
 # git log for numbered access
-alias glp='git_command --no-pager log -5'
+alias glp='git_generating_command --no-pager log -5'
 alias gan='git_command annotate '
 alias gr='git_command reset '
-alias gs='git_command status'
-alias gb='git_command branch'
+alias gs='git_generating_command status'
+alias gb='git_generating_command branch'
 alias g='git'
 alias grp='git review post'
 alias grs='EDITOR=emacs git review submit'
 alias gro='git review open'
 alias gsh='git show'
-alias gshn='git_command show --name-only'
+alias gshn='git_generating_command show --name-only'
 alias gp='kinit; git pull && update_csearch 1'
 alias gtl='pushd $(git rev-parse --show-toplevel)'
-alias gsc='git_command diff master --name-only'
-alias gcl='numbered_command cpplint'
+alias gsc='git_generating_command diff master --name-only'
+alias gcl='numbered_generating_command cpplint'
 
 #
 # TODO list! (Help me out! :) )
