@@ -5,7 +5,7 @@
 if [[ ! $(which csearch) =~ "csearch" ]]; then
     echo "csearch not found! Please install csearch "
         "(https://github.com/google/codesearch) before continuing"
-    exit 1 
+    exit 1
 fi
 
 #
@@ -46,7 +46,7 @@ function f() {
 
     printf '%s\n' "${csr[@]}"
     IFS=$OLDIFS
-    
+
     # If only one result, take me there already!
     if [ ${#csr[@]} -eq 1 ]; then
         r 1
@@ -125,7 +125,7 @@ function compare_version_lesser() {
 # Usage:
 # ls | show_hidden
 alias show_hidden="tr -dc '[:print:]' | od -c"
-alias ci='CSEARCHINDEX="$(git rev-parse --show-toplevel)"/.csearchindex; cindex .' 
+alias ci='CSEARCHINDEX="$(git rev-parse --show-toplevel)"/.csearchindex; cindex .'
 
 # Is the argument a number ?
 is_num_result=""
@@ -166,10 +166,10 @@ function is_gen_command() {
 
 # Is my workspace dirty ? (for this branch)
 clean="no"
-function is_workspace_dirty() { 
-    if [[ ${csr[@]} =~ "working directory clean" ]]; then 
+function is_workspace_dirty() {
+    if [[ ${csr[@]} =~ "working directory clean" ]]; then
         clean="yes"; else clean="no";
-    fi 
+    fi
 }
 
 # Run a git command with special conditions
@@ -281,7 +281,7 @@ function gcm() {
 # A repository of git commands wrapped in a number-referencing wrapper
 # which makes it easy to run subsequent commands
 # Usage:
-# <command> [optional line number] <arguments that may follow the 
+# <command> [optional line number] <arguments that may follow the
 # original command>
 ######################################################################
 #function gch() { filename=$(resolve $1 0); git checkout $2 $filename; }
@@ -307,7 +307,7 @@ alias gshn='git_generating_command show --name-only'
 alias gp='kinit; git pull && update_csearch 1'
 alias gtl='pushd $(git rev-parse --show-toplevel)'
 alias gsc='git_generating_command diff master --name-only'
-alias gcl='numbered_generating_command cpplint'
+alias gcl='numbered_command cpplint'
 
 #
 # TODO list! (Help me out! :) )
