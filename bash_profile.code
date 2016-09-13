@@ -15,7 +15,7 @@ fi
 # Usage:
 # f <text to find> [filetype]
 #
-csr=()
+export csr=()
 function f() {
 
     is_git_command=0
@@ -23,13 +23,13 @@ function f() {
     # Update CSEARCHINDEX
     update_csearch
 
-    csr=()
     extension=".*"
     if (( "$#" == 2 )) ; then
         extension=$2
     fi
     OLDIFS=$IFS
 
+    csr=()
     # using "script" preserves color formatting
     # which can be then piped into the csr array
     # Regular search runs on grep
@@ -80,7 +80,10 @@ function update_csearch() {
 # Usage:
 # r <number against line number of result>
 function r() {
+    OLDIFS=$IFS
+    IFS=$' '
     openEditorAt $(resolve $1)
+    IFS=$OLDIFS
 }
 
 # Utility function to get the filename at line number
