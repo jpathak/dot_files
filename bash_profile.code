@@ -16,6 +16,7 @@ fi
 # f <text to find> [filetype]
 #
 csr=()
+print_f_command_output=1
 function f() {
 
     is_git_command=0
@@ -44,13 +45,24 @@ function f() {
         IFS=$'\n' csr=($(script -q /dev/null csearch -f "$extension\$" -n "$1" | grep --color=always "$1" | nl -d '\n'))
     fi
 
-    printf '%s\n' "${csr[@]}"
+    if [[ $print_f_command_output == 1 ]]; then
+        printf '%s\n' "${csr[@]}"
+    fi
+    print_f_command_output=1
     IFS=$OLDIFS
 
     # If only one result, take me there already!
     if [ ${#csr[@]} -eq 1 ]; then
         r 1
     fi
+}
+
+# f with grep for convenience but which stores csr correctly
+function ff()
+{
+    echo "args: $1 $2"
+    print_f_command_output=0
+    f $1 && f $1 | grep $2
 }
 
 function update_csearch() {
@@ -275,7 +287,7 @@ function fo() {
 }
 
 function grm() {
-    rm `resolve $1 0`
+    rm $(resolve $1 0)
 }
 
 function gcm() {
