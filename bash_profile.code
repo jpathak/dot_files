@@ -286,6 +286,11 @@ function fo() {
     fi
 }
 
+# Find definition of:
+function fd() {
+    f "class $1" h
+}
+
 function grm() {
     rm $(resolve $1 0)
 }
