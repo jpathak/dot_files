@@ -5,7 +5,6 @@
 if [[ ! $(which csearch) =~ "csearch" ]]; then
     echo "csearch not found! Please install csearch "
         "(https://github.com/google/codesearch) before continuing"
-    exit 1
 fi
 
 #
@@ -299,6 +298,12 @@ function gcm() {
     git commit -a -m "$@"
 }
 
+# Branch open
+function bro() {
+    branch=$(git branch | grep \* | awk '{print $2}')
+    open "https://git.splunk.com/projects/SPLCORE/repos/main/compare/commits?sourceBranch=refs/heads/$branch&targetBranch=refs/heads/develop"
+}
+
 ######################################################################
 # GIT COMMANDS -
 # A repository of git commands wrapped in a number-referencing wrapper
@@ -310,7 +315,8 @@ function gcm() {
 #function gch() { filename=$(resolve $1 0); git checkout $2 $filename; }
 alias gch='git_command checkout'
 function gchb {
-    arc feature $USER/$1
+    git checkout -b $USER/$1
+    #arc feature $USER/$1
 }
 alias gd='git_command diff '
 alias ga='git_command add '
@@ -327,13 +333,13 @@ alias gs='git_generating_command status'
 alias gb='git_generating_command branch'
 alias g='git'
 #alias grp='git review post'
-alias grp='EDITOR=emacs arc diff --browse'
+# alias grp='EDITOR=emacs arc diff --browse'
 #alias grs='EDITOR=emacs git review submit'
-alias grs='EDITOR=emacs arc land'
-alias gro='git review open'
+# alias grs='EDITOR=emacs arc land'
+# alias gro='git review open'
 alias gsh='git show'
 alias gshn='git_generating_command show --name-only'
-alias gp='kinit; git pull && update_csearch 1'
+alias gp='git pull && update_csearch 1'
 alias gtl='pushd $(git rev-parse --show-toplevel)'
 alias gsc='git_generating_command diff master --name-only'
 alias gcl='numbered_command cpplint'
