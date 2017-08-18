@@ -37,12 +37,12 @@ function f() {
     echo "Searching files of type (regex): $extension"
     if [[ ! -e $CSEARCHINDEX ]]; then
         echo "Using regular search..."
-        IFS=$'\n' csr=($(script -q /dev/null find . -name "*.$extension" -exec grep --mmap -rnie "$1" {} \; | nl))
+        IFS=$'\n' csr=($(script -q /dev/null find . -name "*.$extension" -exec grep --mmap -rnie "$1" {} \; | nl -b a))
     else
         echo "Using indexed search, index=$CSEARCHINDEX"
 
         # "Fast" search runs on csearch
-        IFS=$'\n' csr=($(script -q /dev/null csearch -f "$extension\$" -n "$1" | grep --color=always "$1" | nl -d '\n'))
+        IFS=$'\n' csr=($(script -q /dev/null csearch -f "$extension\$" -n "$1" | grep --color=always "$1" | nl -b a -d '\n'))
     fi
 
     if [[ $print_f_command_output == 1 ]]; then
@@ -229,7 +229,7 @@ function numbered_command() {
             arg="${@:1:$(($#-1))} $(resolve ${@: -1})"
         fi
         IFS=$' ' rarg=($arg) IFS=$OLDIFS
-        IFS=$'\n' csr=($(script -q /dev/null $command ${rarg[@]} | nl))
+        IFS=$'\n' csr=($(script -q /dev/null $command ${rarg[@]} | nl -b a))
 
         is_workspace_dirty
         if [[ $1 == "status" && $clean == "yes" ]]; then
@@ -269,7 +269,7 @@ function fo() {
         fi
     else
         OLDIFS=$IFS
-        IFS=$'\n' csr=($(script -q /dev/null find . -name "$1" | nl))
+        IFS=$'\n' csr=($(script -q /dev/null find . -name "$1" | nl -b a))
         printf '%s\n' "${csr[@]}"
         IFS=$OLDIFS
 
