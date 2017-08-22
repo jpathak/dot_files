@@ -5,7 +5,6 @@
 if [[ ! $(which csearch) =~ "csearch" ]]; then
     echo "csearch not found! Please install csearch "
         "(https://github.com/google/codesearch) before continuing"
-    exit 1
 fi
 
 #
@@ -37,12 +36,12 @@ function f() {
     echo "Searching files of type (regex): $extension"
     if [[ ! -e $CSEARCHINDEX ]]; then
         echo "Using regular search..."
-        IFS=$'\n' csr=($(script -q /dev/null find . -name "*.$extension" -exec grep --mmap -rnie "$1" {} \; | nl -b a))
+        IFS=$'\n' csr=($(find . -name "*.$extension" -exec grep --mmap -rnie "$1" {} \; | nl -b a))
     else
         echo "Using indexed search, index=$CSEARCHINDEX"
 
         # "Fast" search runs on csearch
-        IFS=$'\n' csr=($(script -q /dev/null csearch -f "$extension\$" -n "$1" | grep --color=always "$1" | nl -b a -d '\n'))
+        IFS=$'\n' csr=($(csearch -f "$extension\$" -n "$1" | grep --color=always "$1" | nl -b a -d '\n'))
     fi
 
     if [[ $print_f_command_output == 1 ]]; then
@@ -229,7 +228,7 @@ function numbered_command() {
             arg="${@:1:$(($#-1))} $(resolve ${@: -1})"
         fi
         IFS=$' ' rarg=($arg) IFS=$OLDIFS
-        IFS=$'\n' csr=($(script -q /dev/null $command ${rarg[@]} | nl -b a))
+        IFS=$'\n' csr=($($command ${rarg[@]} | nl -b a))
 
         is_workspace_dirty
         if [[ $1 == "status" && $clean == "yes" ]]; then
@@ -269,7 +268,7 @@ function fo() {
         fi
     else
         OLDIFS=$IFS
-        IFS=$'\n' csr=($(script -q /dev/null find . -name "$1" | nl -b a))
+        IFS=$'\n' csr=($(find . -name "$1" | nl -b a))
         printf '%s\n' "${csr[@]}"
         IFS=$OLDIFS
 
@@ -333,7 +332,7 @@ alias grs='EDITOR=emacs arc land'
 alias gro='git review open'
 alias gsh='git show'
 alias gshn='git_generating_command show --name-only'
-alias gp='kinit; git pull && update_csearch 1'
+alias gp='git pull && update_csearch 1'
 alias gtl='pushd $(git rev-parse --show-toplevel)'
 alias gsc='git_generating_command diff master --name-only'
 alias gcl='numbered_command cpplint'
