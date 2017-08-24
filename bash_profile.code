@@ -291,11 +291,12 @@ function fo() {
 _codeComplete()
 {
     local cur=${COMP_WORDS[COMP_CWORD]}
-    arr=($(find $PWD -name $cur* | xargs basename))
+    arr=($(find $PWD -name $cur* -exec  basename {} \;))
     arr1=$(echo ${arr[@]})
     COMPREPLY=( $(compgen -W "$arr1" -- $cur) )
 
 }
+
 complete -F _codeComplete fo
 
 # Find definition of:
