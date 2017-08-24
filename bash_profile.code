@@ -248,6 +248,9 @@ function numbered_command() {
             $command $1 $3 $2
         fi
     fi
+    is_generating_command=0
+    is_git_command=0
+    is_num_result=""
     IFS=$OLDIFS
 }
 
@@ -285,6 +288,16 @@ function fo() {
     fi
 }
 
+_codeComplete()
+{
+    local cur=${COMP_WORDS[COMP_CWORD]}
+    arr=($(find $PWD -name $cur* | xargs basename))
+    arr1=$(echo ${arr[@]})
+    COMPREPLY=( $(compgen -W "$arr1" -- $cur) )
+
+}
+complete -F _codeComplete fo
+
 # Find definition of:
 function fd() {
     f "class $1" h
@@ -298,6 +311,18 @@ function gcm() {
     git commit -a -m "$@"
 }
 
+# Branch open
+function bro() {
+    branch=$(git branch | grep \* | awk '{print $2}')
+    open "https://git.splunk.com/projects/SPLCORE/repos/main/compare/commits?sourceBranch=refs/heads/$branch"
+}
+
+# alias gro='git review open'
+function gro() {
+    # TODO Find out how you can filter for this pull request
+    stash browse pull-requests
+}
+
 ######################################################################
 # GIT COMMANDS -
 # A repository of git commands wrapped in a number-referencing wrapper
@@ -309,7 +334,8 @@ function gcm() {
 #function gch() { filename=$(resolve $1 0); git checkout $2 $filename; }
 alias gch='git_command checkout'
 function gchb {
-    arc feature $USER/$1
+    # arc feature $USER/$1
+    git checkout -b $USER/$1
 }
 alias gd='git_command diff '
 alias ga='git_command add '
@@ -326,10 +352,9 @@ alias gs='git_generating_command status'
 alias gb='git_generating_command branch'
 alias g='git'
 #alias grp='git review post'
-alias grp='EDITOR=emacs arc diff --browse'
+# alias grp='EDITOR=emacs arc diff --browse'
 #alias grs='EDITOR=emacs git review submit'
-alias grs='EDITOR=emacs arc land'
-alias gro='git review open'
+# alias grs='EDITOR=emacs arc land'
 alias gsh='git show'
 alias gshn='git_generating_command show --name-only'
 alias gp='git pull && update_csearch 1'
