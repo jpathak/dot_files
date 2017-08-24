@@ -314,7 +314,7 @@ function gcm() {
 
 # Branch open
 function bro() {
-    branch=$(git branch | grep \* | awk '{print $2}')
+    branch=$(git rev-parse --abbrev-ref HEAD)
     open "https://git.splunk.com/projects/SPLCORE/repos/main/compare/commits?sourceBranch=refs/heads/$branch"
 }
 
@@ -322,6 +322,18 @@ function bro() {
 function gro() {
     # TODO Find out how you can filter for this pull request
     stash browse pull-requests
+}
+
+# Function to squash git commits
+function gsq() {
+    # Assumption: Parent is origin/develop
+    # TODO take in a parent branch as arg
+    branch=$(git rev-parse --abbrev-ref HEAD)
+    echo "Squashing branch $branch..."
+    # IMPORTANT
+    # git merge --squash returns a non-zero return code as expected when the merge fails
+    # When this happens, you need to fix conflicts manually and then execute the remaining commands manually
+    git reset --hard origin/develop && git merge --squash origin/$branch && EDITOR=emacs git commit && git push origin --delete $branch && git push -u origin $branch
 }
 
 ######################################################################
