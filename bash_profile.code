@@ -13,16 +13,15 @@ fi
 # and the env var CSEARCHINDEX to be able to locate it
 # Usage:
 # f <text to find> [filetype]
-#
+# If this is a git repository, then it will build an index and
+# search it in the index. If not, it will use the usual grep 
 csr=()
 print_f_command_output=1
 function f() {
 
     is_git_command=0
-
     # Update CSEARCHINDEX
     update_csearch
-
     csr=()
     extension=".*"
     if (( "$#" == 2 )) ; then
@@ -39,7 +38,6 @@ function f() {
         IFS=$'\n' csr=($(find . -name "*.$extension" -exec grep --mmap -rnie "$1" {} \; | nl -b a))
     else
         echo "Using indexed search, index=$CSEARCHINDEX"
-
         # "Fast" search runs on csearch
         IFS=$'\n' csr=($(csearch -f "$extension\$" -n "$1" | grep --color=always "$1" | nl -b a -d '\n'))
     fi
@@ -57,6 +55,12 @@ function f() {
 }
 
 # f with grep for convenience but which stores csr correctly
+# This does a two level pass by searching *within*  the results provided by f <tag>.
+# With f <tag>, if you get too many results and pipe them to a regular grep,
+# you cannot search and then open the result (f <tag> | grep "foo" and then subsequent
+# fo 2 doesn't work) since there is currently a bug with result numbering. (Result numbering
+# doesn't get stored if the results of f <tag> are piped to any other command). A possible fix
+# for this is to pipe it to a file and not keep it in memory, but there are pros and cons to that.   
 function ff()
 {
     echo "args: $1 $2"
@@ -65,7 +69,6 @@ function ff()
 }
 
 function update_csearch() {
-
     # Check if this is a git repository
     if [[ $(git rev-parse --show-toplevel) ]]; then
 
@@ -214,7 +217,6 @@ function numbered_command() {
     clean="yes"
     #is_gen_command $@
     OLDIFS=$IFS
-
     command=$1
     # Either there was a git generating command or
     # a f() generating command
@@ -229,7 +231,6 @@ function numbered_command() {
         fi
         IFS=$' ' rarg=($arg) IFS=$OLDIFS
         IFS=$'\n' csr=($($command ${rarg[@]} | nl -b a))
-
         is_workspace_dirty
         if [[ $1 == "status" && $clean == "yes" ]]; then
             $command $@;
@@ -258,6 +259,13 @@ function numbered_command() {
 # Arguments can include the filename or
 # optionally a number which is an option
 # from a previously run generating command.
+# Example usage would be: 
+# >fo foo*
+# 1 foo.cpp 
+# 2 foo1.cpp 
+# 3 foo.h
+# > fo 2
+# <Opens foo1.cpp>
 function fo() {
     is_num $1
     # open dir option only applicable for numbered arguments
@@ -274,7 +282,6 @@ function fo() {
         IFS=$'\n' csr=($(find . -name "$1" | nl -b a))
         printf '%s\n' "${csr[@]}"
         IFS=$OLDIFS
-
         #
         # If only one result, take me there already!
         #
@@ -294,9 +301,13 @@ _codeComplete()
     arr=($(find $PWD -name $cur* -exec  basename {} \;))
     arr1=$(echo ${arr[@]})
     COMPREPLY=( $(compgen -W "$arr1" -- $cur) )
-
 }
 
+# Code completion for the fo command
+# This searches, recursively under $PWD for the filename
+# starting with the text completed so far
+# This is different from linux code complete for ls and so on
+# in that the search is recursive under the current directory
 complete -F _codeComplete fo
 
 # Find definition of:
@@ -306,6 +317,19 @@ function fd() {
 
 function grm() {
     rm $(resolve $1 0)
+}
+
+######################################################################
+# GIT COMMANDS -
+# A repository of git commands wrapped in a number-referencing wrapper
+# which makes it easy to run subsequent commands
+# Usage:
+# <command> [optional line number] <arguments that may follow the
+# original command>
+######################################################################
+function gchb {
+    # arc feature $USER/$1
+    git checkout -b $USER/$1
 }
 
 function gcm() {
@@ -336,26 +360,11 @@ function gsq() {
     git reset --hard origin/develop && git merge --squash origin/$branch && EDITOR=emacs git commit && git push origin --delete $branch && git push -u origin $branch
 }
 
-######################################################################
-# GIT COMMANDS -
-# A repository of git commands wrapped in a number-referencing wrapper
-# which makes it easy to run subsequent commands
-# Usage:
-# <command> [optional line number] <arguments that may follow the
-# original command>
-######################################################################
-#function gch() { filename=$(resolve $1 0); git checkout $2 $filename; }
 alias gch='git_command checkout'
-function gchb {
-    # arc feature $USER/$1
-    git checkout -b $USER/$1
-}
 alias gd='git_command diff '
 alias ga='git_command add '
-
 #normal git log
 alias gl='git_command log'
-
 # git log for numbered access
 alias glp='git_generating_command --no-pager log -5'
 alias gan='git_command annotate '
@@ -377,9 +386,4 @@ alias gcl='numbered_command cpplint'
 
 #
 # TODO list! (Help me out! :) )
-#
-# awesome-to-have: fo can autocomplete filenames to open
-# perhaps: http://unix.stackexchange.com/questions/28283/autocomplete-of-filename-in-directory
-
-
-
+# Add stuff here as you see fit
