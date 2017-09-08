@@ -69,6 +69,7 @@ function ff()
 }
 
 function update_csearch() {
+    echo "Updating code search index. Use CTRL-C to cancel if necessary!"
     # Check if this is a git repository
     if [[ $(git rev-parse --show-toplevel) ]]; then
 
