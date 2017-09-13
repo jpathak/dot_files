@@ -105,10 +105,11 @@ function r() {
 # from the catch-all array csr
 function resolve() {
     with_linenum=${2:-1}
-    temp=$(echo ${csr[$1 - 1]} | sed -E "s/"$'\E'"\[([0-9]{1,3}((;[0-9]{1,3})*)?)?[m|K]//g")
     if [[ $is_git_command == 1 ]]; then
+        temp=$(echo ${csr[$1 - 1]} | sed -E "s/.*( .*)/\1/g")
         echo $temp | awk '{ print $NF }' | tr -d '[[:cntrl:]]'
     else
+        temp=$(echo ${csr[$1 - 1]} | sed -E "s/"$'\E'"\[([0-9]{1,3}((;[0-9]{1,3})*)?)?[m|K]//g")
         if [[ $with_linenum == 1 ]]; then
             echo $temp | perl -pe's/^\s*[0-9]+\s+([^\s:]*):*([0-9]+)*:*.*$/\1 \2/'
         else
@@ -251,7 +252,6 @@ function numbered_command() {
         fi
     fi
     is_generating_command=0
-    is_git_command=0
     is_num_result=""
     IFS=$OLDIFS
 }
