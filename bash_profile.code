@@ -13,16 +13,15 @@ fi
 # and the env var CSEARCHINDEX to be able to locate it
 # Usage:
 # f <text to find> [filetype]
-#
+# If this is a git repository, then it will build an index and
+# search it in the index. If not, it will use the usual grep
 csr=()
 print_f_command_output=1
 function f() {
 
     is_git_command=0
-
     # Update CSEARCHINDEX
     update_csearch
-
     csr=()
     extension=".*"
     if (( "$#" == 2 )) ; then
@@ -36,12 +35,11 @@ function f() {
     echo "Searching files of type (regex): $extension"
     if [[ ! -e $CSEARCHINDEX ]]; then
         echo "Using regular search..."
-        IFS=$'\n' csr=($(script -q /dev/null find . -name "*.$extension" -exec grep --mmap -rnie "$1" {} \; | nl -b a))
+        IFS=$'\n' csr=($(find . -name "*.$extension" -exec grep --mmap -rnie "$1" {} \; | nl -b a))
     else
         echo "Using indexed search, index=$CSEARCHINDEX"
-
         # "Fast" search runs on csearch
-        IFS=$'\n' csr=($(script -q /dev/null csearch -f "$extension\$" -n "$1" | grep --color=always "$1" | nl -b a -d '\n'))
+        IFS=$'\n' csr=($(csearch -f "$extension\$" -n "$1" | grep --color=always "$1" | nl -b a -d '\n'))
     fi
 
     if [[ $print_f_command_output == 1 ]]; then
@@ -57,6 +55,12 @@ function f() {
 }
 
 # f with grep for convenience but which stores csr correctly
+# This does a two level pass by searching *within*  the results provided by f <tag>.
+# With f <tag>, if you get too many results and pipe them to a regular grep,
+# you cannot search and then open the result (f <tag> | grep "foo" and then subsequent
+# fo 2 doesn't work) since there is currently a bug with result numbering. (Result numbering
+# doesn't get stored if the results of f <tag> are piped to any other command). A possible fix
+# for this is to pipe it to a file and not keep it in memory, but there are pros and cons to that.
 function ff()
 {
     echo "args: $1 $2"
@@ -65,7 +69,7 @@ function ff()
 }
 
 function update_csearch() {
-
+    echo "Updating code search index. Use CTRL-C to cancel if necessary!"
     # Check if this is a git repository
     if [[ $(git rev-parse --show-toplevel) ]]; then
 
@@ -101,10 +105,11 @@ function r() {
 # from the catch-all array csr
 function resolve() {
     with_linenum=${2:-1}
-    temp=$(echo ${csr[$1 - 1]} | sed -E "s/"$'\E'"\[([0-9]{1,3}((;[0-9]{1,3})*)?)?[m|K]//g")
     if [[ $is_git_command == 1 ]]; then
+        temp=$(echo ${csr[$1 - 1]} | sed -E "s/.*( .*)/\1/g")
         echo $temp | awk '{ print $NF }' | tr -d '[[:cntrl:]]'
     else
+        temp=$(echo ${csr[$1 - 1]} | sed -E "s/"$'\E'"\[([0-9]{1,3}((;[0-9]{1,3})*)?)?[m|K]//g")
         if [[ $with_linenum == 1 ]]; then
             echo $temp | perl -pe's/^\s*[0-9]+\s+([^\s:]*):*([0-9]+)*:*.*$/\1 \2/'
         else
@@ -214,7 +219,6 @@ function numbered_command() {
     clean="yes"
     #is_gen_command $@
     OLDIFS=$IFS
-
     command=$1
     # Either there was a git generating command or
     # a f() generating command
@@ -228,8 +232,7 @@ function numbered_command() {
             arg="${@:1:$(($#-1))} $(resolve ${@: -1})"
         fi
         IFS=$' ' rarg=($arg) IFS=$OLDIFS
-        IFS=$'\n' csr=($(script -q /dev/null $command ${rarg[@]} | nl -b a))
-
+        IFS=$'\n' csr=($($command ${rarg[@]} | nl -b a))
         is_workspace_dirty
         if [[ $1 == "status" && $clean == "yes" ]]; then
             $command $@;
@@ -248,6 +251,8 @@ function numbered_command() {
             $command $1 $3 $2
         fi
     fi
+    is_generating_command=0
+    is_num_result=""
     IFS=$OLDIFS
 }
 
@@ -255,6 +260,13 @@ function numbered_command() {
 # Arguments can include the filename or
 # optionally a number which is an option
 # from a previously run generating command.
+# Example usage would be:
+# >fo foo*
+# 1 foo.cpp
+# 2 foo1.cpp
+# 3 foo.h
+# > fo 2
+# <Opens foo1.cpp>
 function fo() {
     is_num $1
     # open dir option only applicable for numbered arguments
@@ -268,10 +280,9 @@ function fo() {
         fi
     else
         OLDIFS=$IFS
-        IFS=$'\n' csr=($(script -q /dev/null find . -name "$1" | nl -b a))
+        IFS=$'\n' csr=($(find . -name "$1" | nl -b a))
         printf '%s\n' "${csr[@]}"
         IFS=$OLDIFS
-
         #
         # If only one result, take me there already!
         #
@@ -285,6 +296,21 @@ function fo() {
     fi
 }
 
+_codeComplete()
+{
+    local cur=${COMP_WORDS[COMP_CWORD]}
+    arr=($(find $PWD -name $cur* -exec  basename {} \;))
+    arr1=$(echo ${arr[@]})
+    COMPREPLY=( $(compgen -W "$arr1" -- $cur) )
+}
+
+# Code completion for the fo command
+# This searches, recursively under $PWD for the filename
+# starting with the text completed so far
+# This is different from linux code complete for ls and so on
+# in that the search is recursive under the current directory
+complete -F _codeComplete fo
+
 # Find definition of:
 function fd() {
     f "class $1" h
@@ -292,16 +318,6 @@ function fd() {
 
 function grm() {
     rm $(resolve $1 0)
-}
-
-function gcm() {
-    git commit -a -m "$@"
-}
-
-# Branch open
-function bro() {
-    branch=$(git branch | grep \* | awk '{print $2}')
-    open "https://git.splunk.com/projects/SPLCORE/repos/main/compare/commits?sourceBranch=refs/heads/$branch&targetBranch=refs/heads/develop"
 }
 
 ######################################################################
@@ -312,18 +328,44 @@ function bro() {
 # <command> [optional line number] <arguments that may follow the
 # original command>
 ######################################################################
-#function gch() { filename=$(resolve $1 0); git checkout $2 $filename; }
-alias gch='git_command checkout'
 function gchb {
+    # arc feature $USER/$1
     git checkout -b $USER/$1
-    #arc feature $USER/$1
 }
+
+function gcm() {
+    git commit -a -m "$@"
+}
+
+# Branch open
+function bro() {
+    branch=$(git rev-parse --abbrev-ref HEAD)
+    open "https://git.splunk.com/projects/SPLCORE/repos/main/compare/commits?sourceBranch=refs/heads/$branch"
+}
+
+# alias gro='git review open'
+function gro() {
+    # TODO Find out how you can filter for this pull request
+    stash browse pull-requests
+}
+
+# Function to squash git commits
+function gsq() {
+    # Assumption: Parent is origin/develop
+    # TODO take in a parent branch as arg
+    branch=$(git rev-parse --abbrev-ref HEAD)
+    echo "Squashing branch $branch..."
+    # IMPORTANT
+    # git merge --squash returns a non-zero return code as expected when the merge fails
+    # When this happens, you need to fix conflicts manually and then execute the remaining commands manually
+    git reset --hard origin/develop && git merge --squash origin/$branch && EDITOR=emacs git commit && git push origin --delete $branch && git push -u origin $branch
+}
+
+alias gch='git_command checkout'
 alias gd='git_command diff '
 alias ga='git_command add '
-
 #normal git log
 alias gl='git_command log'
-
 # git log for numbered access
 alias glp='git_generating_command --no-pager log -5'
 alias gan='git_command annotate '
@@ -332,23 +374,13 @@ alias gsr='git reset --soft HEAD~'
 alias gs='git_generating_command status'
 alias gb='git_generating_command branch'
 alias g='git'
-#alias grp='git review post'
+# alias grp='git review post'
 # alias grp='EDITOR=emacs arc diff --browse'
-#alias grs='EDITOR=emacs git review submit'
+# alias grs='EDITOR=emacs git review submit'
 # alias grs='EDITOR=emacs arc land'
-# alias gro='git review open'
 alias gsh='git show'
 alias gshn='git_generating_command show --name-only'
 alias gp='git pull && update_csearch 1'
 alias gtl='pushd $(git rev-parse --show-toplevel)'
 alias gsc='git_generating_command diff master --name-only'
 alias gcl='numbered_command cpplint'
-
-#
-# TODO list! (Help me out! :) )
-#
-# awesome-to-have: fo can autocomplete filenames to open
-# perhaps: http://unix.stackexchange.com/questions/28283/autocomplete-of-filename-in-directory
-
-
-
