@@ -340,7 +340,7 @@ function gcm() {
 # Branch open
 function bro() {
     branch=$(git rev-parse --abbrev-ref HEAD)
-    open "https://git.splunk.com/projects/SPLCORE/repos/main/compare/commits?sourceBranch=refs/heads/$branch"
+    echo "Open splunk window: https://git.splunk.com/projects/SPLCORE/repos/main/compare/commits?sourceBranch=refs/heads/$branch"
 }
 
 # alias gro='git review open'
