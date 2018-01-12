@@ -35,7 +35,7 @@ function f() {
     echo "Searching files of type (regex): $extension"
     if [[ ! -e $CSEARCHINDEX ]]; then
         echo "Using regular search..."
-        IFS=$'\n' csr=($(find . -name "*.$extension" -exec grep --mmap -rnie "$1" {} \; | nl -b a))
+        IFS=$'\n' csr=($(find . -name "*.$extension" -exec grep -rnie "$1" {} \; | nl -b a))
     else
         echo "Using indexed search, index=$CSEARCHINDEX"
         # "Fast" search runs on csearch
