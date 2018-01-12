@@ -337,12 +337,6 @@ function gcm() {
     git commit -a -m "$@"
 }
 
-# Branch open
-function bro() {
-    branch=$(git rev-parse --abbrev-ref HEAD)
-    echo "Open splunk window: https://git.splunk.com/projects/SPLCORE/repos/main/compare/commits?sourceBranch=refs/heads/$branch"
-}
-
 # alias gro='git review open'
 function gro() {
     # TODO Find out how you can filter for this pull request
