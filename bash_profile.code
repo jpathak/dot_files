@@ -23,7 +23,7 @@ function f() {
     # Update CSEARCHINDEX
     update_csearch
     csr=()
-    extension=".*"
+    extension='.*'
     if (( "$#" == 2 )) ; then
         extension=$2
     fi
@@ -35,7 +35,9 @@ function f() {
     echo "Searching files of type (regex): $extension"
     if [[ ! -e $CSEARCHINDEX ]]; then
         echo "Using regular search..."
-        IFS=$'\n' csr=($(find . -name "*.$extension" -exec grep -H -rnie "$1" {} \; | nl -b a))
+        extension="*.$extension"
+        echo "Extension is $extension"
+        IFS=$'\n' csr=($(find . -name $extension -exec grep -H -rnie "$1" {} \; | nl -b a))
     else
         echo "Using indexed search, index=$CSEARCHINDEX"
         # "Fast" search runs on csearch
@@ -378,4 +380,4 @@ alias gp='git pull && update_csearch 1'
 alias gtl='pushd $(git rev-parse --show-toplevel)'
 alias gsc='git_generating_command diff master --name-only'
 alias gcl='numbered_command cpplint'
-alias gm='git merge'
+alias gm='EDITOR=emacs git merge'
