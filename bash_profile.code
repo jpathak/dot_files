@@ -71,7 +71,6 @@ function ff()
 }
 
 function update_csearch() {
-    echo "Updating code search index. Use CTRL-C to cancel if necessary!"
     # Check if this is a git repository
     if [[ $(git rev-parse --show-toplevel) ]]; then
 
@@ -81,6 +80,7 @@ function update_csearch() {
 
         # Create the search index if it doesn't exist already in the repo path
         if [[ ! -e $CSEARCHINDEX ]] || [[ $1 ]]; then
+            echo "Updating code search index. Use CTRL-C to cancel if necessary!"
             pushd $(git rev-parse --show-toplevel)
             cindex .
             popd
