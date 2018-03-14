@@ -248,6 +248,7 @@ function numbered_command() {
         fi
         # $3 is any other options which were given
         if [[ $is_num_result == "yes" ]]; then
+            # TODO make a better system to accept numbered arguments 
             $command $1 $3 $(resolve $2 0)
         else
             $command ${@}
@@ -372,6 +373,7 @@ alias gr='git_command reset '
 alias gsr='git reset --soft HEAD~'
 alias gs='git_generating_command status'
 alias gb='git_generating_command branch'
+alias gb2='git_command branch'
 alias g='git'
 # alias grp='git review post'
 # alias grp='EDITOR=emacs arc diff --browse'
