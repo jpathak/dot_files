@@ -37,11 +37,11 @@ function f() {
         echo "Using regular search..."
         extension="*.$extension"
         echo "Extension is $extension"
-        IFS=$'\n' csr=($(unbuffer find . -name $extension -exec grep -H -rnie "$1" {} \; | nl -b a))
+        IFS=$'\n' csr=($(find . -name $extension -exec grep -H -rnie "$1" {} \; | nl -b a))
     else
         echo "Using indexed search, index=$CSEARCHINDEX"
         # "Fast" search runs on csearch
-        IFS=$'\n' csr=($(unbuffer csearch -f "$extension\$" -n "$1" | grep --color=always "$1" | nl -b a -d '\n'))
+        IFS=$'\n' csr=($(csearch -f "$extension\$" -n "$1" | grep --color=always "$1" | nl -b a -d '\n'))
     fi
 
     if [[ $print_f_command_output == 1 ]]; then
