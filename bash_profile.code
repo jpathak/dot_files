@@ -248,7 +248,7 @@ function numbered_command() {
         fi
         # $3 is any other options which were given
         if [[ $is_num_result == "yes" ]]; then
-            # TODO make a better system to accept numbered arguments 
+            # TODO make a better system to accept numbered arguments
             $command $1 $3 $(resolve $2 0)
         else
             $command ${@}
@@ -386,3 +386,4 @@ alias gtl='pushd $(git rev-parse --show-toplevel)'
 alias gsc='git_generating_command diff master --name-only'
 alias gcl='numbered_command cpplint'
 alias gm='EDITOR=emacs git merge'
+alias gf='git_command fetch'
