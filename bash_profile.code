@@ -23,7 +23,7 @@ function f() {
     # Update CSEARCHINDEX
     update_csearch
     csr=()
-    extension='.*'
+    extension='*'
     if (( "$#" == 2 )) ; then
         extension=$2
     fi
@@ -37,7 +37,7 @@ function f() {
         echo "Using regular search..."
         extension="*.$extension"
         echo "Extension is $extension"
-        IFS=$'\n' csr=($(find . -name $extension -exec grep -H -rnie "$1" {} \; | nl -b a))
+        IFS=$'\n' csr=($(find . -name "$extension" -exec grep -H -rnie "$1" {} \; | nl -b a))
     else
         echo "Using indexed search, index=$CSEARCHINDEX"
         # "Fast" search runs on csearch
