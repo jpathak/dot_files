@@ -36,7 +36,7 @@ function f() {
     if [[ ! -e $CSEARCHINDEX ]]; then
         echo "Using regular search..."
         extension="$extension"
-        echo "Extension is .$extension"
+        echo "Extension is $extension"
         IFS=$'\n' csr=($(find . -name "$extension" -exec grep -H -rnie "$1" {} \; | nl -b a))
     else
         echo "Using indexed search, index=$CSEARCHINDEX"
