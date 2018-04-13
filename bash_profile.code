@@ -25,7 +25,7 @@ function f() {
     csr=()
     extension='*'
     if (( "$#" == 2 )) ; then
-        extension=$2
+        extension="*.$2"
     fi
     OLDIFS=$IFS
 
@@ -35,13 +35,13 @@ function f() {
     echo "Searching files of type (regex): $extension"
     if [[ ! -e $CSEARCHINDEX ]]; then
         echo "Using regular search..."
-        extension="*.$extension"
-        echo "Extension is $extension"
+        extension="$extension"
+        echo "Extension is .$extension"
         IFS=$'\n' csr=($(find . -name "$extension" -exec grep -H -rnie "$1" {} \; | nl -b a))
     else
         echo "Using indexed search, index=$CSEARCHINDEX"
         # "Fast" search runs on csearch
-        IFS=$'\n' csr=($(csearch -f "$extension\$" -n "$1" | grep --color=always "$1" | nl -b a -d '\n'))
+        IFS=$'\n' csr=($(csearch -f ".$extension\$" -n "$1" | grep --color=always "$1" | nl -b a -d '\n'))
     fi
 
     if [[ $print_f_command_output == 1 ]]; then
