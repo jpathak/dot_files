@@ -23,7 +23,7 @@ function f() {
     # Update CSEARCHINDEX
     update_csearch
     csr=()
-    extension='*'
+    extension='.*'
     if (( "$#" == 2 )) ; then
         extension="*.$2"
     fi
