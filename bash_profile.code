@@ -377,6 +377,7 @@ function gsq() {
 }
 
 alias gch='git_command checkout'
+alias gfch='gf; gch'
 alias gd='git_command diff '
 alias ga='git_command add '
 #normal git log
