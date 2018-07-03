@@ -108,8 +108,13 @@ function r() {
 function resolve() {
     with_linenum=${2:-1}
     if [[ $is_git_command == 1 ]]; then
-        temp=$(echo ${csr[$1 - 1]} | sed -E "s/.*( .*)/\1/g")
-        echo $temp | sed "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g" | awk '{ print $NF }' | tr -d '[[:cntrl:]]'
+        if [[ $previous_command_type == "blame" ]]; then
+            # Tell resolve how to parse blame output
+            echo ${csr[$1 - 1]} | awk '{print $2}'
+        else
+            temp=$(echo ${csr[$1 - 1]} | sed -E "s/.*( .*)/\1/g")
+            echo $temp | sed "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g" | awk '{ print $NF }' | tr -d '[[:cntrl:]]'
+        fi
     else
         temp=$(echo ${csr[$1 - 1]} | sed -E "s/"$'\E'"\[([0-9]{1,3}((;[0-9]{1,3})*)?)?[m|K]//g")
         if [[ $with_linenum == 1 ]]; then
@@ -214,22 +219,26 @@ function is_workspace_dirty() {
 #   from which you would need to perform further actions)
 # 2) Is the argument to the command a number ?
 is_git_command=0
+previous_command_type=""
 function git_command() {
     is_git_command=1
     is_generating_command="no"
     numbered_command $@
+    previous_command_type=$1
 }
 
 function git_generating_command() {
     is_git_command=1
     is_generating_command="yes"
     numbered_command $@
+    previous_command_type=$1
 }
 
 function numbered_generating_command() {
     is_generating_command="yes"
     is_git_command=0
     numbered_command $@
+    previous_command_type=$1
 }
 
 function numbered_command() {
@@ -317,7 +326,7 @@ function fo() {
 _codeComplete()
 {
     local cur=${COMP_WORDS[COMP_CWORD]}
-    arr=($(find $PWD -name $cur* -exec  basename {} \;))
+    arr=($(find $PWD -path $SPLUNK_SOURCE/contrib -prune -o -name $cur* -exec  basename {} \;))
     arr1=$(echo ${arr[@]})
     COMPREPLY=( $(compgen -W "$arr1" -- $cur) )
 }
@@ -375,6 +384,17 @@ function gsq() {
     # When this happens, you need to fix conflicts manually and then execute the remaining commands manually
     git reset --hard origin/$parent_branch && git merge --squash origin/$branch && EDITOR=emacs git commit && git push origin --delete $branch && git push -u origin $branch
 }
+
+function gbl() {
+    is_num $1
+    if [[ $is_num_result == "yes" ]]; then
+        git_generating_command blame $1
+    else
+        git_generating_command blame $(find . -name $1)
+    fi
+}
+
+complete -F _codeComplete gbl
 
 alias gch='git_command checkout'
 alias gfch='gf; gch'
