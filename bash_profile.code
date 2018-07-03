@@ -227,6 +227,7 @@ function git_command() {
     previous_command_type=$1
 }
 
+# TODO : get color back
 function git_generating_command() {
     is_git_command=1
     is_generating_command="yes"
