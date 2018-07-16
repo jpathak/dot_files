@@ -1,6 +1,9 @@
 #!/bin/sh
 # WARNING: WIP!!
 
+# Feature requeest: 1) Add fr: Ability to search in set of files specified by previous search results
+
+
 # Check if csearch exists
 if [[ ! $(which csearch) =~ "csearch" ]]; then
     echo "csearch not found! Please install csearch "
