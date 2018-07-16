@@ -341,7 +341,7 @@ complete -F _codeComplete fo
 
 # Find definition of:
 function fd() {
-    f "class $1" h
+    f "class $1 " h
 }
 
 function grm() {
