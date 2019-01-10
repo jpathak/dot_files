@@ -150,11 +150,7 @@ function openEditorAt() {
     if [[ -z $2 ]]; then
         $EDITOR $1
     else
-        if [[ $EDITOR =~ "emacs" ]]; then
-            $EDITOR +$2 $1
-        else
-            $EDITOR $1:$2
-        fi
+        $EDITOR +$2 $1
     fi
 }
 
