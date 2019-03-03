@@ -331,12 +331,26 @@ _codeComplete()
     COMPREPLY=( $(compgen -W "$arr1" -- $cur) )
 }
 
+_codeCompleteEditor()
+{
+    local cur=${COMP_WORDS[COMP_CWORD]}
+    # arr=($(find $PWD -path $SPLUNK_SOURCE/contrib -prune -o -name $cur* -exec  basename {} \;))
+    # arr=($(find $PWD -path $SPLUNK_SOURCE/contrib -prune -o -name $cur* -exec  basename {} \;))
+    # arr1=$(echo ${arr[@]})
+    arr1=$(fzf $cur)
+    COMPREPLY=( $(compgen -W "$arr1" -- $cur) )
+}
+
 # Code completion for the fo command
 # This searches, recursively under $PWD for the filename
 # starting with the text completed so far
 # This is different from linux code complete for ls and so on
 # in that the search is recursive under the current directory
 complete -F _codeComplete fo
+
+complete -F _codeCompleteEditor e
+complete -F _codeCompleteEditor gl
+complete -F _codeCompleteEditor gch
 
 # Find definition of:
 function fd() {
