@@ -348,7 +348,6 @@ _codeCompleteEditor()
 # in that the search is recursive under the current directory
 complete -F _codeComplete fo
 
-complete -F _codeCompleteEditor e
 complete -F _codeCompleteEditor gl
 complete -F _codeCompleteEditor gch
 
