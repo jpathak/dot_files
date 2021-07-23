@@ -307,7 +307,7 @@ function fo() {
         fi
     else
         OLDIFS=$IFS
-        IFS=$'\n' csr=($(unbuffer find . -name "$1" | nl -b a))
+        IFS=$'\n' csr=($(find . -name "$1" | nl -b a))
         printf '%s\n' "${csr[@]}"
         IFS=$OLDIFS
         #
