@@ -2,6 +2,9 @@
 
 # WARNING: WIP!!
 
+# Feature requeest: 1) Add fr: Ability to search in set of files specified by previous search results
+
+
 # Check if csearch exists
 if [[ ! $(which csearch) =~ "csearch" ]]; then
     echo "csearch not found! Please install csearch "
@@ -148,11 +151,7 @@ function openEditorAt() {
     if [[ -z $2 ]]; then
         $EDITOR $1
     else
-        if [[ $EDITOR =~ "emacs" ]]; then
-            $EDITOR +$2 $1
-        else
-            $EDITOR $1:$2
-        fi
+        $EDITOR +$2 $1
     fi
 }
 
@@ -228,6 +227,7 @@ function git_command() {
     previous_command_type=$1
 }
 
+# TODO : get color back
 function git_generating_command() {
     is_git_command=1
     is_generating_command="yes"
@@ -308,7 +308,7 @@ function fo() {
         fi
     else
         OLDIFS=$IFS
-        IFS=$'\n' csr=($(unbuffer find . -name "$1" | nl -b a))
+        IFS=$'\n' csr=($(find . -name "$1" | nl -b a))
         printf '%s\n' "${csr[@]}"
         IFS=$OLDIFS
         #
@@ -332,6 +332,16 @@ _codeComplete()
     COMPREPLY=( $(compgen -W "$arr1" -- $cur) )
 }
 
+_codeCompleteEditor()
+{
+    local cur=${COMP_WORDS[COMP_CWORD]}
+    # arr=($(find $PWD -path $SPLUNK_SOURCE/contrib -prune -o -name $cur* -exec  basename {} \;))
+    # arr=($(find $PWD -path $SPLUNK_SOURCE/contrib -prune -o -name $cur* -exec  basename {} \;))
+    # arr1=$(echo ${arr[@]})
+    arr1=$(fzf $cur)
+    COMPREPLY=( $(compgen -W "$arr1" -- $cur) )
+}
+
 # Code completion for the fo command
 # This searches, recursively under $PWD for the filename
 # starting with the text completed so far
@@ -339,9 +349,12 @@ _codeComplete()
 # in that the search is recursive under the current directory
 complete -F _codeComplete fo
 
+complete -F _codeCompleteEditor gl
+complete -F _codeCompleteEditor gch
+
 # Find definition of:
 function fd() {
-    f "class $1" h
+    f "class .*$1 " h
 }
 
 function grm() {
@@ -383,7 +396,7 @@ function gsq() {
     # IMPORTANT
     # git merge --squash returns a non-zero return code as expected when the merge fails
     # When this happens, you need to fix conflicts manually and then execute the remaining commands manually
-    git reset --hard origin/$parent_branch && git merge --squash origin/$branch && EDITOR=emacs git commit && git push origin --delete $branch && git push -u origin $branch
+    git pull && git reset --hard origin/$parent_branch && git merge --squash origin/$branch && git commit && git push origin --delete $branch && git push -u origin $branch
 }
 
 function gbl() {
@@ -399,6 +412,7 @@ complete -F _codeComplete gbl
 
 alias gch='git_command checkout'
 alias gfch='gf; gch'
+alias gbch='git checkout -b'
 alias gd='git_command diff '
 alias ga='git_command add '
 #normal git log
@@ -423,5 +437,5 @@ alias gpu='git push'
 alias gtl='pushd $(git rev-parse --show-toplevel)'
 alias gsc='git_generating_command diff master --name-only'
 alias gcl='numbered_command cpplint'
-alias gm='EDITOR=emacs git merge'
+alias gm='git merge'
 alias gf='git_command fetch'

@@ -1,6 +1,21 @@
 # dot_files
 
-Collection of my (public) dotfiles
+Collection of my (public) dotfiles which focuses on productivity around using git as well as searching through codebases. I use Google's codesearch (csearch) project for the search part, but provide a numbered interface over any "generating" commands - commands which generate any output which we need to reference in subsequent commands. Eg; 
+Instead of: 
+> git branch
+ * branch1
+ * branch2
+> git checkout branch2
+
+We do:
+
+> git branch
+ 1 * branch1
+ 2 * branch2
+> gch 2
+
+This is just an example of one generating command but the same principle applies to other commands as well as code search output. 
+
 
 # What
 This is a dot-file that you call in bash to increase your command line productivity.
