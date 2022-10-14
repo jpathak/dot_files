@@ -1,4 +1,5 @@
-#!/bin/sh
+#!/usr/bin/env bash
+
 # WARNING: WIP!!
 
 # Check if csearch exists
