@@ -152,7 +152,7 @@ function openEditorAt() {
     if [[ -z $2 ]]; then
         $EDITOR $1
     else
-        if [ "$EDITOR" ~= "subl" ]; then
+        if [[ "$EDITOR" =~ "subl" ]]; then
             $EDITOR $1:+$2
         else
             $EDITOR +$2 $1
