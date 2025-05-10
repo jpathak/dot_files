@@ -103,7 +103,7 @@ function update_csearch() {
 function r() {
     OLDIFS=$IFS
     IFS=$' '
-    openEditorAt $(resolve $1)
+    openEditorAt $(resolve $1)``
     IFS=$OLDIFS
 }
 
@@ -122,7 +122,8 @@ function resolve() {
     else
         temp=$(echo ${csr[$1 - 1]} | sed -E "s/"$'\E'"\[([0-9]{1,3}((;[0-9]{1,3})*)?)?[m|K]//g")
         if [[ $with_linenum == 1 ]]; then
-            echo $temp | sed "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g" | perl -pe's/^\s*[0-9]+\s+([^\s:]*):*([0-9]+)*:*.*$/\1 \2/'
+            # echo $temp | sed "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g" | perl -pe's/^\s*[0-9]+\s+([^\s:]*):*([0-9]+)*:*.*$/\1 \2/'
+            echo $temp | sed "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g" | sed -rn "s/^[^\/]+([^:]+):([0-9]+):.*/\1 \2/p"
         else
             echo $temp | sed "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g" | perl -pe's/^\s*[0-9]+\s+([^\s:]*):*([0-9]+)*:*.*$/\1/'
         fi
@@ -151,8 +152,8 @@ function openEditorAt() {
     if [[ -z $2 ]]; then
         $EDITOR $1
     else
-        if [[ $EDITOR="subl" ]]; then
-            $EDITOR $1:+$2
+        if [[ "$EDITOR" =~ "subl" ]]; then
+            $EDITOR $1:$2
         else
             $EDITOR +$2 $1
         fi
@@ -436,7 +437,7 @@ alias g='git'
 # alias grs='EDITOR=emacs arc land'
 alias gsh='git show'
 alias gshn='git_generating_command show --name-only'
-alias gp='git pull && update_csearch 1'
+alias gp='git remote prune origin && git pull && update_csearch 1'
 alias gpu='git push'
 alias gtl='pushd $(git rev-parse --show-toplevel)'
 alias gsc='git_generating_command diff master --name-only'
